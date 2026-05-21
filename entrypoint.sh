@@ -7,4 +7,8 @@ if [ "${DISABLE_GPU:-true}" = "true" ]; then
     args="$args --chromium-args=disable-gpu"
 fi
 
+if [ -n "${CHROMIUM_EXTRA_ARGS}" ]; then
+    args="$args --chromium-args=${CHROMIUM_EXTRA_ARGS}"
+fi
+
 exec /opt/browservice/bin/browservice $args "$@"

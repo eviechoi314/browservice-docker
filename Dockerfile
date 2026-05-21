@@ -94,6 +94,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libxss1 \
         libxkbcommon0 \
         libgtk-3-0 \
+        # Mesa EGL/DRI — required for GPU rendering and VA-API
+        libgl1-mesa-dri \
+        libegl-mesa0 \
+        # VA-API runtime and open-source drivers (Intel/AMD)
+        libva2 \
+        libva-drm2 \
+        mesa-va-drivers \
+        intel-media-va-driver-non-free \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /build/release/bin /opt/browservice/bin
@@ -112,9 +120,11 @@ USER browservice
 EXPOSE 8080
 
 # Environment variables:
-#   LISTEN_ADDR  — bind address for the HTTP server (default: 0.0.0.0:8080)
-#   DISABLE_GPU  — pass --chromium-args=disable-gpu (default: true)
-#                  set to false and add --device=/dev/dri/renderD128 for GPU passthrough
+#   LISTEN_ADDR         — bind address for the HTTP server (default: 0.0.0.0:8080)
+#   DISABLE_GPU         — pass --chromium-args=disable-gpu (default: true)
+#                         set to false and mount a DRI device for GPU/VA-API
+#   CHROMIUM_EXTRA_ARGS — additional comma-separated args forwarded to Chromium
+#                         e.g. for VA-API: use-gl=egl,enable-features=VaapiVideoDecoder
 #
 # The Chromium sandbox requires SYS_ADMIN — run with: --cap-add=SYS_ADMIN
 # Any extra browservice flags can be passed as CMD arguments.

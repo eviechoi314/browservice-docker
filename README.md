@@ -59,7 +59,8 @@ Two environment variables control the main options:
 | Variable | Default | Description |
 |---|---|---|
 | `LISTEN_ADDR` | `0.0.0.0:8080` | Bind address for the HTTP server |
-| `DISABLE_GPU` | `true` | Pass `--chromium-args=disable-gpu` to Chromium. Set to `false` with a DRI device mounted for GPU passthrough |
+| `DISABLE_GPU` | `true` | Pass `--chromium-args=disable-gpu` to Chromium. Set to `false` with a DRI device mounted for GPU/VA-API |
+| `CHROMIUM_EXTRA_ARGS` | _(unset)_ | Additional comma-separated args forwarded to Chromium (e.g. `use-angle=default,enable-features=VaapiVideoDecoder`) |
 
 Any additional browservice flags can be appended as command arguments and will be passed through directly.
 
@@ -68,11 +69,16 @@ Any additional browservice flags can be appended as command arguments and will b
 docker run -d --cap-add=SYS_ADMIN -e LISTEN_ADDR=0.0.0.0:9090 -p 9090:9090 \
   ghcr.io/eviechoi314/browservice-docker:latest
 
-# GPU passthrough (Intel/AMD — mount the appropriate DRI render node)
+# GPU passthrough with ANGLE (Intel/AMD open-source drivers)
 # Find your render node with: ls /dev/dri/  — typically renderD128, or renderD129 if you have multiple GPUs
-docker run -d --cap-add=SYS_ADMIN --device=/dev/dri/renderD128 -e DISABLE_GPU=false -p 8080:8080 \
+docker run -d --cap-add=SYS_ADMIN --device=/dev/dri/renderD128 \
+  -e DISABLE_GPU=false \
+  -e CHROMIUM_EXTRA_ARGS="use-angle=default,enable-features=VaapiVideoDecoder" \
+  -p 8080:8080 \
   ghcr.io/eviechoi314/browservice-docker:latest
 ```
+
+> **VA-API note:** The image includes `intel-media-va-driver-non-free` and `mesa-va-drivers`. However, VA-API video decode requires libva ≥ 1.17 — Ubuntu 22.04 ships 1.14, so hardware video decode won't activate on the current base image. GPU rasterization via ANGLE still works. Full VA-API support will come with an Ubuntu 24.04 base image upgrade.
 
 For the full list of browservice options:
 
