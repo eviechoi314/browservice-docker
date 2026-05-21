@@ -28,6 +28,19 @@ services:
       - SYS_ADMIN
     ports:
       - "8080:8080"
+
+# With GPU passthrough:
+  browservice:
+    image: ghcr.io/eviechoi314/browservice-docker:latest
+    restart: unless-stopped
+    cap_add:
+      - SYS_ADMIN
+    devices:
+      - /dev/dri/renderD128
+    environment:
+      DISABLE_GPU: "false"
+    ports:
+      - "8080:8080"
 ```
 
 ## Available tags
@@ -41,17 +54,26 @@ Pinned version tags (e.g. `v0.9.12.2`) will be added once a tagging workflow is 
 
 ## Configuration
 
-browservice flags can be appended to the `docker run` command. The listen address is pre-set to `0.0.0.0:8080`; override it if needed:
+Two environment variables control the main options:
+
+| Variable | Default | Description |
+|---|---|---|
+| `LISTEN_ADDR` | `0.0.0.0:8080` | Bind address for the HTTP server |
+| `DISABLE_GPU` | `true` | Pass `--chromium-args=disable-gpu` to Chromium. Set to `false` with a DRI device mounted for GPU passthrough |
+
+Any additional browservice flags can be appended as command arguments and will be passed through directly.
 
 ```bash
-docker run -d \
-  --cap-add=SYS_ADMIN \
-  -p 9090:9090 \
-  ghcr.io/eviechoi314/browservice-docker:latest \
-  --vice-opt-http-listen-addr=0.0.0.0:9090
+# Custom port
+docker run -d --cap-add=SYS_ADMIN -e LISTEN_ADDR=0.0.0.0:9090 -p 9090:9090 \
+  ghcr.io/eviechoi314/browservice-docker:latest
+
+# GPU passthrough (Intel/AMD — mount the appropriate DRI render node)
+docker run -d --cap-add=SYS_ADMIN --device=/dev/dri/renderD128 -e DISABLE_GPU=false -p 8080:8080 \
+  ghcr.io/eviechoi314/browservice-docker:latest
 ```
 
-For the full list of options:
+For the full list of browservice options:
 
 ```bash
 docker run --rm ghcr.io/eviechoi314/browservice-docker:latest --help

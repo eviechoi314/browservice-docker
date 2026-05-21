@@ -97,20 +97,25 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /build/release/bin /opt/browservice/bin
+COPY entrypoint.sh /entrypoint.sh
 
 # Chromium refuses to run as root; create a dedicated user.
 # chrome-sandbox (copied as root:root 4755) still works for this user.
 # /tmp/.X11-unix must be pre-created with sticky bit so Xvfb can bind its socket as non-root.
 RUN useradd --system --create-home --shell /usr/sbin/nologin browservice \
  && mkdir -p /tmp/.X11-unix \
- && chmod 1777 /tmp/.X11-unix
+ && chmod 1777 /tmp/.X11-unix \
+ && chmod +x /entrypoint.sh
 
 USER browservice
 
 EXPOSE 8080
 
-# browservice manages its own Xvfb internally; no xvfb-run wrapper needed.
+# Environment variables:
+#   LISTEN_ADDR  — bind address for the HTTP server (default: 0.0.0.0:8080)
+#   DISABLE_GPU  — pass --chromium-args=disable-gpu (default: true)
+#                  set to false and add --device=/dev/dri/renderD128 for GPU passthrough
+#
 # The Chromium sandbox requires SYS_ADMIN — run with: --cap-add=SYS_ADMIN
-ENTRYPOINT ["/opt/browservice/bin/browservice", \
-            "--vice-opt-http-listen-addr=0.0.0.0:8080", \
-            "--chromium-args=disable-gpu"]
+# Any extra browservice flags can be passed as CMD arguments.
+ENTRYPOINT ["/entrypoint.sh"]
