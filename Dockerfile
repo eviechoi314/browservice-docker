@@ -97,12 +97,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         # Mesa EGL/DRI — required for GPU rendering and VA-API
         libgl1-mesa-dri \
         libegl-mesa0 \
-        # VA-API runtime and open-source drivers (Intel/AMD)
+        # VA-API runtime and open-source drivers (AMD / open-source Intel)
         libva2 \
         libva-drm2 \
         mesa-va-drivers \
-        intel-media-va-driver-non-free \
     && rm -rf /var/lib/apt/lists/*
+
+# intel-media-va-driver-non-free only ships for amd64
+RUN if [ "$(dpkg --print-architecture)" = "amd64" ]; then \
+        apt-get update && \
+        apt-get install -y --no-install-recommends intel-media-va-driver-non-free && \
+        rm -rf /var/lib/apt/lists/*; \
+    fi
 
 COPY --from=builder /build/release/bin /opt/browservice/bin
 COPY entrypoint.sh /entrypoint.sh
