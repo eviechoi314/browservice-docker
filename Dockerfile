@@ -66,13 +66,13 @@ RUN chown root:root release/bin/chrome-sandbox \
  && chmod 4755 release/bin/chrome-sandbox
 
 # ── Runtime stage ─────────────────────────────────────────────────────────────
-FROM ubuntu:22.04 AS runtime
+FROM ubuntu:24.04 AS runtime
 
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         # browservice direct dependencies
-        libpocofoundation80 libpoconet80 \
+        libpocofoundation80t64 libpoconet80t64 \
         libjpeg-turbo8 \
         zlib1g \
         libpango-1.0-0 libpangoft2-1.0-0 \
@@ -83,10 +83,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         xvfb xauth \
         # CEF/Chromium runtime requirements
         libatk-bridge2.0-0 \
-        libasound2 \
+        libasound2t64 \
         libgbm1 \
         libxi6 \
-        libcups2 \
+        libcups2t64 \
         libnss3 \
         libxcursor1 \
         libxrandr2 \
