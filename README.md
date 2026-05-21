@@ -15,7 +15,20 @@ docker run -d \
 
 Then open `http://<your-host>:8080` in any browser — even a very old one.
 
-> **`--cap-add=SYS_ADMIN` is required.** Chromium's process sandbox needs this capability to isolate renderer processes. Without it, the browser won't start.
+> **`--cap-add=SYS_ADMIN` is required.** Chromium's process sandbox needs this capability to isolate renderer processes. Without it, the browser won't start. For Docker Compose, use `cap_add: [SYS_ADMIN]`.
+
+### Docker Compose
+
+```yaml
+services:
+  browservice:
+    image: ghcr.io/eviechoi314/browservice-docker:latest
+    restart: unless-stopped
+    cap_add:
+      - SYS_ADMIN
+    ports:
+      - "8080:8080"
+```
 
 ## Available tags
 
