@@ -111,4 +111,6 @@ EXPOSE 8080
 
 # browservice manages its own Xvfb internally; no xvfb-run wrapper needed.
 # The Chromium sandbox requires SYS_ADMIN — run with: --cap-add=SYS_ADMIN
-ENTRYPOINT ["/opt/browservice/bin/browservice", "--vice-opt-http-listen-addr=0.0.0.0:8080"]
+ENTRYPOINT ["/opt/browservice/bin/browservice", \
+            "--vice-opt-http-listen-addr=0.0.0.0:8080", \
+            "--chromium-args=disable-gpu"]
