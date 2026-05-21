@@ -69,6 +69,7 @@ docker run -d --cap-add=SYS_ADMIN -e LISTEN_ADDR=0.0.0.0:9090 -p 9090:9090 \
   ghcr.io/eviechoi314/browservice-docker:latest
 
 # GPU passthrough (Intel/AMD — mount the appropriate DRI render node)
+# Find your render node with: ls /dev/dri/  — typically renderD128, or renderD129 if you have multiple GPUs
 docker run -d --cap-add=SYS_ADMIN --device=/dev/dri/renderD128 -e DISABLE_GPU=false -p 8080:8080 \
   ghcr.io/eviechoi314/browservice-docker:latest
 ```
