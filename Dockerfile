@@ -72,7 +72,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         # browservice direct dependencies
-        libpoco-dev \
+        libpocofoundation80 libpoconet80 \
         libjpeg-turbo8 \
         zlib1g \
         libpango-1.0-0 libpangoft2-1.0-0 \
@@ -98,9 +98,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY --from=builder /build/release/bin /opt/browservice/bin
 
+# Chromium refuses to run as root; create a dedicated user.
+# chrome-sandbox (copied as root:root 4755) still works for this user.
+# /tmp/.X11-unix must be pre-created with sticky bit so Xvfb can bind its socket as non-root.
+RUN useradd --system --create-home --shell /usr/sbin/nologin browservice \
+ && mkdir -p /tmp/.X11-unix \
+ && chmod 1777 /tmp/.X11-unix
+
+USER browservice
+
 EXPOSE 8080
 
-# The Chromium sandbox inside the container requires the SYS_ADMIN capability.
-# Always start this container with: --cap-add=SYS_ADMIN
-ENTRYPOINT ["xvfb-run", "--auto-servernum", "--server-args=-screen 0 1280x720x24", \
-            "/opt/browservice/bin/browservice"]
+# browservice manages its own Xvfb internally; no xvfb-run wrapper needed.
+# The Chromium sandbox requires SYS_ADMIN — run with: --cap-add=SYS_ADMIN
+ENTRYPOINT ["/opt/browservice/bin/browservice", "--vice-opt-http-listen-addr=0.0.0.0:8080"]
