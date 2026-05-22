@@ -28,10 +28,14 @@ services:
       - SYS_ADMIN
     ports:
       - "8080:8080"
+```
 
-# With GPU passthrough:
+With GPU passthrough:
+
+```yaml
+services:
   browservice:
-    image: ghcr.io/eviechoi314/browservice-docker:latest
+    image: ghcr.io/eviechoi314/browservice-docker:feature-vaapi-noble
     restart: unless-stopped
     cap_add:
       - SYS_ADMIN
@@ -47,8 +51,9 @@ services:
 
 | Tag | Description |
 |---|---|
-| `latest` | Latest build from `main` |
+| `latest` | Latest build from `main` (Ubuntu 22.04 runtime) |
 | `main` | Same as `latest` |
+| `feature-vaapi-noble` | Ubuntu 24.04 runtime — full VA-API hardware video decode support |
 
 Pinned version tags (e.g. `v0.9.12.2`) will be added once a tagging workflow is in place.
 
@@ -78,7 +83,9 @@ docker run -d --cap-add=SYS_ADMIN --device=/dev/dri/renderD128 \
   ghcr.io/eviechoi314/browservice-docker:latest
 ```
 
-> **VA-API note:** The image includes `intel-media-va-driver-non-free` and `mesa-va-drivers`. However, VA-API video decode requires libva ≥ 1.17 — Ubuntu 22.04 ships 1.14, so hardware video decode won't activate on the current base image. GPU rasterization via ANGLE still works. Full VA-API support will come with an Ubuntu 24.04 base image upgrade.
+> **VA-API note:** The `latest`/`main` image (Ubuntu 22.04 runtime) includes `mesa-va-drivers` and `intel-media-va-driver-non-free`, but VA-API video decode requires libva ≥ 1.17 and Ubuntu 22.04 ships 1.14 — so hardware video decode won't activate. GPU rasterization via ANGLE still works fine.
+>
+> Use the `feature-vaapi-noble` tag (Ubuntu 24.04 runtime, libva 2.20) for full VA-API hardware video decode support.
 
 For the full list of browservice options:
 
@@ -107,14 +114,16 @@ docker build --build-arg BROWSERVICE_VERSION=v0.9.12.2 -t browservice-docker .
 The Dockerfile is a two-stage build:
 
 1. **Builder** — Ubuntu 22.04 with full build toolchain. Clones browservice at the pinned version, downloads the matching patched CEF tarball, compiles the CEF DLL wrapper, then builds browservice itself with `make release`.
-2. **Runtime** — Ubuntu 22.04 with only the runtime libraries needed by browservice and CEF. The compiled `release/bin/` directory is copied over. A non-root `browservice` user runs the process; `chrome-sandbox` retains its root:root setuid bit so Chromium's sandbox still works.
+2. **Runtime** — Ubuntu 24.04 (Noble) with only the runtime libraries needed by browservice and CEF. The compiled `release/bin/` directory is copied over. A non-root `browservice` user runs the process; `chrome-sandbox` retains its root:root setuid bit so Chromium's sandbox still works.
+
+The builder stays on Ubuntu 22.04 to match upstream's build environment; the resulting binaries run fine on 24.04 thanks to glibc forward-compatibility.
 
 browservice manages its own Xvfb virtual display internally — no display server needs to be provided externally.
 
 ## Platform support
 
 - `linux/amd64` — built and tested
-- `linux/arm64` and `linux/arm/v7` — supported by upstream CEF releases; multi-platform builds can be added
+- `linux/arm64` — built and pushed by CI; tested on Raspberry Pi CM5
 
 ## Upstream
 
